@@ -127,4 +127,5 @@ env.display_environment(ax)
 # Create the animation
 ani = FuncAnimation(fig, update, frames=100, repeat=False, interval=500)
 
-plt.show()
+plt.show(block=True)
+plt.close(fig)
