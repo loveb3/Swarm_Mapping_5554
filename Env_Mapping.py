@@ -1,5 +1,10 @@
 import numpy as np
+import threading
+from shared_queue import move_queue, bot_queue
 
+# Shared signaling objects
+dfs_ready = threading.Event()
+animation_ready = threading.Event()
 
 class Node:
     def __init__(self, coordinates, imageL=None, imageF=None, imageR=None, movements=None, visited=False):
@@ -111,12 +116,18 @@ def multiRobotDFS(initial_positions, initial_data):
 
             # Send the movement command to the robot
             if move:
-                send_movement(move)
+                bot_queue.put(bot)
+                move_queue.put(move)
+                # Notify animation and wait for it to complete
+                dfs_ready.clear()
+                animation_ready.set()  # Notify the animation thread
+                dfs_ready.wait()  # Wait for the animation to signal back
 
-                # see if we need a wait time
             else:
                 print(f"Robot {bot} has no valid moves left and will wait.")
 
+    # Notify animation that DFS is complete
+    animation_ready.set()
     print("Exploration complete. All accessible nodes have been visited.")
     return env_tree
 
@@ -150,37 +161,24 @@ def captureImage():
 
 def depthCalc(depthL, depthF, depthR, threshold):
     """
-    Determine valid movement directions based on depth images.
+    Determine valid movement directions based on depth and field bounds.
 
     Parameters:
-        depthL (np.ndarray): Depth image for the left direction.
-        depthF (np.ndarray): Depth image for the forward direction.
-        depthR (np.ndarray): Depth image for the right direction.
-        threshold (float): Minimum depth value to consider a path valid.
+        depthL, depthF, depthR (int): Depth values for directions.
+        threshold (int): Minimum depth value to consider a path valid.
 
     Returns:
-        list: A list of directions with valid movements.
-              Example: ["left", "forward"]
+        list: Valid directions.
     """
-
-    # Define a region of interest (ROI) as a center square of each image
-    def is_valid_depth(depth_image):
-        # Extract the ROI (e.g., center 20% of the image)
-        h, w = depth_image.shape
-        roi = depth_image[h // 4:3 * h // 4, w // 4:3 * w // 4]
-        # Check if the mean depth in the ROI exceeds the threshold
-        return np.mean(roi) > threshold
-
-    # Check validity for each direction and build the result list
     valid_movements = []
-    if is_valid_depth(depthL):
+    if depthL > threshold:
         valid_movements.append("left")
-    if is_valid_depth(depthF):
+    if depthF > threshold:
         valid_movements.append("forward")
-    if is_valid_depth(depthR):
+    if depthR > threshold:
         valid_movements.append("right")
-
     return valid_movements
+
 
 def calcCoords(curr_coords, direction, face):
     x, y = curr_coords
@@ -229,11 +227,6 @@ def object_detection():
     obj = print('object type')
 
     return obj
-
-def send_movement(move):
-    # Send movement to Gazebo
-
-    print(move)
 
 def opposite_direction(direction):
     if direction == 'forward':

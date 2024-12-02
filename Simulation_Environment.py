@@ -3,6 +3,10 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle, Polygon
 from matplotlib.animation import FuncAnimation
 from Env_Mapping import multiRobotDFS, Node  # Import the DFS logic
+from Env_Mapping import dfs_ready, animation_ready # Import the signaling objects
+import threading
+from threading import Thread
+from shared_queue import move_queue, bot_queue
 
 class MultiRobotEnvironment:
     def __init__(self, rows, cols, obstacle_coords=None):
@@ -86,20 +90,35 @@ env.add_robot((9, 9), direction='West')
 
 # Set up DFS mapping
 initial_data = [((None, None, None), ['forward', 'right', 'left'])] * len(initial_positions)
-env_tree = multiRobotDFS(initial_positions, initial_data)
+dfs_thread = Thread(target=multiRobotDFS, args=(initial_positions, initial_data))
+dfs_thread.start()
 
 # Animation function
 def update(frame):
-    for robot_idx, robot in enumerate(env.robots):
-        # Retrieve the next move from the DFS control logic
-        position = env.get_robot_position(robot_idx)
-        node = env_tree.get(position)
+    # Wait for the DFS to signal that it's ready
+    animation_ready.wait()
+    animation_ready.clear()  # Reset the signal for the next iteration
 
-        if node and node.movements:
-            move = node.movements.pop(0)  # Use the next movement
-            env.move_robot(robot_idx, move)
+    # for robot_idx, robot in enumerate(env.robots):
+    #     # Retrieve the next move from the DFS control logic
+    #     position = env.get_robot_position(robot_idx)
+    #     if not move_queue.empty():
+    #         move = move_queue.get()
+    #         env.move_robot(robot_idx, move)
+    #
+    #     if node and node.movements:
+    #         move = node.movements.pop(0)  # Use the next movement
+
+    if not move_queue.empty():
+        robot_idx = bot_queue.get()
+        move = move_queue.get()
+        env.move_robot(robot_idx, move)
+
 
     env.display_environment(ax)
+
+    # Notify DFS that the animation step is complete
+    dfs_ready.set()
 
 # Set up the Matplotlib figure
 fig, ax = plt.subplots(figsize=(8, 8))
