@@ -1,6 +1,6 @@
 import numpy as np
 import threading
-from shared_queue import move_queue, bot_queue
+from shared_queue import move_queue, bot_queue, face_queue
 
 # Shared signaling objects
 dfs_ready = threading.Event()
@@ -102,6 +102,7 @@ def multiRobotDFS(initial_positions, initial_data):
                 curr_coords = curr_node.coordinates
                 imageL, imageF, imageR, possible_movements = populate_node(bot, curr_coords, curr_node.front)
                 curr_node.set(imageL, imageF, imageR, possible_movements, True)
+                print(f"Robot {bot} is at position {curr_coords}.")
 
                 # Explore possible movements
                 for direction in ['right', 'left', 'forward']:
@@ -118,6 +119,7 @@ def multiRobotDFS(initial_positions, initial_data):
                             # Add to frontier if the movement is valid
                             frontier.append(new_node)
                             move = direction
+                            front = new_front
 
                             # Add the opposite direction to the backtracking stack
                             backtrack.append(opposite_direction(direction))
@@ -131,6 +133,7 @@ def multiRobotDFS(initial_positions, initial_data):
                 print(f"Robot {bot} will make movement {move}.")
                 bot_queue.put(bot)
                 move_queue.put(move)
+                face_queue.put(front)
                 # Notify animation and wait for it to complete
                 dfs_ready.clear()
                 animation_ready.set()  # Notify the animation thread

@@ -6,7 +6,7 @@ from Env_Mapping import multiRobotDFS, Node  # Import the DFS logic
 from Env_Mapping import dfs_ready, animation_ready # Import the signaling objects
 import threading
 from threading import Thread
-from shared_queue import move_queue, bot_queue
+from shared_queue import move_queue, bot_queue, face_queue
 
 class MultiRobotEnvironment:
     def __init__(self, rows, cols, obstacle_coords=None):
@@ -24,21 +24,37 @@ class MultiRobotEnvironment:
         """Add a robot to the environment."""
         self.robots.append({'position': position, 'direction': direction})
 
-    def move_robot(self, robot_idx, direction):
-        """Move a robot in the specified direction if possible."""
+    def move_robot(self, robot_idx, direction, face):
+        """
+        Move a robot in the specified direction relative to its face if possible.
+
+        Args:
+            robot_idx (int): Index of the robot to move.
+            direction (str): Direction to move ('forward', 'backward', 'left', 'right').
+            face (str): New orientation of the robot ('North', 'South', 'East', 'West').
+        """
+        # Get the robot's current position
         x, y = self.robots[robot_idx]['position']
-        if direction == 'forward' and x > 0 and self.grid[x - 1, y] == 0:
-            self.robots[robot_idx]['position'] = (x - 1, y)
-            self.robots[robot_idx]['direction'] = 'North'
-        elif direction == 'backward' and x < self.rows - 1 and self.grid[x + 1, y] == 0:
-            self.robots[robot_idx]['position'] = (x + 1, y)
-            self.robots[robot_idx]['direction'] = 'South'
-        elif direction == 'left' and y > 0 and self.grid[x, y - 1] == 0:
-            self.robots[robot_idx]['position'] = (x, y - 1)
-            self.robots[robot_idx]['direction'] = 'West'
-        elif direction == 'right' and y < self.cols - 1 and self.grid[x, y + 1] == 0:
-            self.robots[robot_idx]['position'] = (x, y + 1)
-            self.robots[robot_idx]['direction'] = 'East'
+
+        # Define movement deltas based on the relative direction and face
+        movement = {
+            'North': {'forward': (-1, 0), 'backward': (1, 0), 'left': (0, -1), 'right': (0, 1)},
+            'South': {'forward': (1, 0), 'backward': (-1, 0), 'left': (0, 1), 'right': (0, -1)},
+            'East': {'forward': (0, 1), 'backward': (0, -1), 'left': (-1, 0), 'right': (1, 0)},
+            'West': {'forward': (0, -1), 'backward': (0, 1), 'left': (1, 0), 'right': (-1, 0)},
+        }
+
+        # Get the delta for the movement
+        dx, dy = movement[face][direction]
+
+        # Calculate the new position
+        new_x, new_y = x + dx, y + dy
+
+        # Check if the new position is within bounds and not blocked
+        if 0 <= new_x < self.rows and 0 <= new_y < self.cols and self.grid[new_x, new_y] == 0:
+            # Update the robot's position and direction
+            self.robots[robot_idx]['position'] = (new_x, new_y)
+            self.robots[robot_idx]['direction'] = face
 
     def get_robot_position(self, robot_idx):
         """Get the position of the specified robot."""
@@ -112,7 +128,9 @@ def update(frame):
     if not move_queue.empty():
         robot_idx = bot_queue.get()
         move = move_queue.get()
-        env.move_robot(robot_idx, move)
+        face = face_queue.get()
+        env.move_robot(robot_idx, move, face)
+        print(f'Update says bot {robot_idx} will move {move}')
 
 
     env.display_environment(ax)
