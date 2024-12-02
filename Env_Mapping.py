@@ -159,7 +159,7 @@ def multiRobotDFS(initial_positions, initial_data):
                 print(f"Robot {bot} will make movement {move}.")
                 print(f"and is facing {front}")
                 bot_queue.put(bot)
-                move_queue.put(move)
+                move_queue.put(curr_node.coordinates)
                 face_queue.put(front)
                 # Notify animation and wait for it to complete
                 dfs_ready.clear()
