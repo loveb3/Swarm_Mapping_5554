@@ -93,6 +93,8 @@ def multiRobotDFS(initial_positions, initial_data):
                 # Backtracking logic
                 while backtrack:
                     print(f'{bot} is backtracking at {curr_node.coordinates}\n\n\n\n\n\n\n\n\n')
+                    move = None
+                    print(f'{bot} frontier is {frontier}')
 
                     # Check for unvisited neighbors
                     for direction in ['right', 'left', 'forward']:
@@ -123,6 +125,7 @@ def multiRobotDFS(initial_positions, initial_data):
                 imageL, imageF, imageR, possible_movements = populate_node(bot, curr_coords, curr_node.front)
                 curr_node.set(imageL, imageF, imageR, possible_movements, True)
                 print(f"Robot {bot} is at position {curr_coords}.")
+                remove_from_all_frontiers(curr_node, robot_frontiers)
 
                 # Explore possible movements
                 for direction in ['right', 'left', 'forward']:
@@ -183,6 +186,11 @@ def populate_node(robot_id,coordinates, face):
     imageL, imageF, imageR, depthL, depthF, depthR = captureImage()
     possible_movements = depthCalc(depthL, depthF, depthR, step, coordinates, face)
     return imageL, imageF, imageR, possible_movements
+
+def remove_from_all_frontiers(node, robot_frontiers):
+    for frontier in robot_frontiers:
+        if node in frontier:
+            frontier.remove(node)
 
 
 def captureImage():

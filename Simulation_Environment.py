@@ -20,7 +20,7 @@ class MultiRobotEnvironment:
         for x, y in self.obstacle_coords:
             self.grid[x, y] = 1
 
-    def add_robot(self, position, direction='North'):
+    def add_robot(self, position, direction='South'):
         """Add a robot to the environment."""
         self.robots.append({'position': position, 'direction': direction})
 
@@ -34,21 +34,23 @@ class MultiRobotEnvironment:
             face (str): New orientation of the robot ('North', 'South', 'East', 'West').
         """
         # Get the robot's current position
-        x, y = self.robots[robot_idx]['position']
+        # x, y = self.robots[robot_idx]['position']
+        #
+        # # Define movement deltas based on the relative direction and face
+        # movement = {
+        #     'North': {'forward': (-1, 0), 'backward': (1, 0), 'left': (0, -1), 'right': (0, 1)},
+        #     'South': {'forward': (1, 0), 'backward': (-1, 0), 'left': (0, 1), 'right': (0, -1)},
+        #     'East': {'forward': (0, 1), 'backward': (0, -1), 'left': (-1, 0), 'right': (1, 0)},
+        #     'West': {'forward': (0, -1), 'backward': (0, 1), 'left': (1, 0), 'right': (-1, 0)},
+        # }
+        #
+        # # Get the delta for the movement
+        # dx, dy = movement[face][direction]
+        #
+        # # Calculate the new position
+        # new_x, new_y = x + dx, y + dy
 
-        # Define movement deltas based on the relative direction and face
-        movement = {
-            'North': {'forward': (-1, 0), 'backward': (1, 0), 'left': (0, -1), 'right': (0, 1)},
-            'South': {'forward': (1, 0), 'backward': (-1, 0), 'left': (0, 1), 'right': (0, -1)},
-            'East': {'forward': (0, 1), 'backward': (0, -1), 'left': (-1, 0), 'right': (1, 0)},
-            'West': {'forward': (0, -1), 'backward': (0, 1), 'left': (1, 0), 'right': (-1, 0)},
-        }
-
-        # Get the delta for the movement
-        dx, dy = movement[face][direction]
-
-        # Calculate the new position
-        new_x, new_y = x + dx, y + dy
+        new_y, new_x = direction
 
         # Check if the new position is within bounds and not blocked
         if 0 <= new_x < self.rows and 0 <= new_y < self.cols and self.grid[new_x, new_y] == 0:
@@ -89,8 +91,12 @@ class MultiRobotEnvironment:
                 points = [(robot_x - 0.3, robot_y), (robot_x + 0.3, robot_y + 0.2), (robot_x + 0.3, robot_y - 0.2)]
             elif direction == 'East':
                 points = [(robot_x + 0.3, robot_y), (robot_x - 0.3, robot_y + 0.2), (robot_x - 0.3, robot_y - 0.2)]
+            # Assign a color to the robot based on its index or other criteria
+            robot_index = self.robots.index(robot)
+            colors = ['blue', 'green', 'purple', 'yellow', 'red']  # Add more colors as needed
+            color = colors[robot_index % len(colors)]
 
-            ax.add_patch(Polygon(points, color='blue'))
+            ax.add_patch(Polygon(points, color=color))
 
         ax.set_title("Multi-Robot Environment")
 
