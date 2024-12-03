@@ -157,7 +157,7 @@ def multiRobotDFS(initial_positions, initial_data):
                     else:
                         # Mark the node as an obstacle
                         new_node.is_obstacle = True
-                        new_node.obstacle_type = object_detection()
+                        new_node.obstacle_type = object_detection(direction,curr_coords[0],curr_coords[1],model)
 
                         print(f'\n\n Instagram reel moment \n\n\n')
 
