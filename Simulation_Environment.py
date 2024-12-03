@@ -15,6 +15,7 @@ class MultiRobotEnvironment:
         self.obstacle_coords = obstacle_coords if obstacle_coords else []
         self.robots = []  # List of robots in the environment
         self.grid = np.zeros((rows, cols), dtype=int)  # 0 for free, 1 for obstacle
+        self.visited_nodes = set()  # Set to track visited nodes
 
         # Place obstacles
         for x, y in self.obstacle_coords:
@@ -23,6 +24,7 @@ class MultiRobotEnvironment:
     def add_robot(self, position, direction='South'):
         """Add a robot to the environment."""
         self.robots.append({'position': position, 'direction': direction})
+        self.visited_nodes.add(position)  # Mark the initial position as visited
 
     def move_robot(self, robot_idx, direction, face):
         """
@@ -57,6 +59,7 @@ class MultiRobotEnvironment:
             # Update the robot's position and direction
             self.robots[robot_idx]['position'] = (new_x, new_y)
             self.robots[robot_idx]['direction'] = face
+            self.visited_nodes.add((new_x, new_y))  # Mark the new position as visited
 
     def get_robot_position(self, robot_idx):
         """Get the position of the specified robot."""
@@ -70,6 +73,10 @@ class MultiRobotEnvironment:
         ax.set_xticks(range(self.cols + 1))
         ax.set_yticks(range(self.rows + 1))
         ax.grid(True)
+
+        # Draw visited nodes with a green tint
+        for x, y in self.visited_nodes:
+            ax.add_patch(Rectangle((y, self.rows - 1 - x), 1, 1, color='green', alpha=0.3))
 
         # Draw obstacles
         for x, y in self.obstacle_coords:
@@ -103,12 +110,18 @@ class MultiRobotEnvironment:
 # Initialize the environment
 rows, cols = 10, 10
 obstacles = [(3, 3), (5, 5), (6, 7)]
+# rows, cols = 3, 3
+# obstacles = [(0, 0), (0, 2), (2, 0)]
 env = MultiRobotEnvironment(rows, cols, obstacle_coords=obstacles)
 
 # Add robots to the environment
 initial_positions = [(0, 0), (9, 9)]
 env.add_robot((0, 0), direction='East')
 env.add_robot((9, 9), direction='West')
+
+# initial_positions = [(0, 1), (2, 2)]
+# env.add_robot((0, 1), direction='East')
+# env.add_robot((2, 2), direction='West')
 
 # Set up DFS mapping
 initial_data = [((None, None, None), ['forward', 'right', 'left'])] * len(initial_positions)
