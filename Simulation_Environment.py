@@ -7,6 +7,7 @@ from Env_Mapping import dfs_ready, animation_ready # Import the signaling object
 import threading
 from threading import Thread
 from shared_queue import move_queue, bot_queue, face_queue
+from tensorflow.keras.models import load_model
 
 MODEL_PATH = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\best_resnet_model-ep4.keras"
 model = load_model(MODEL_PATH)
