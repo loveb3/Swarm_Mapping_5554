@@ -3,6 +3,7 @@ import threading
 from shared_queue import move_queue, bot_queue, face_queue
 import time
 from object_detection import object_detection
+from Simulation_Environment import model
 # Shared signaling objects
 dfs_ready = threading.Event()
 animation_ready = threading.Event()
