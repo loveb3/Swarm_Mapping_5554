@@ -34,7 +34,7 @@ def preprocess_image(image_path, target_size=(224, 224)):
     return image
 
 # Process up to 10 test images
-test_images = [f for f in os.listdir(TEST_IMAGE_DIR) if f.endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tif'))][:10]
+test_images = [f for f in os.listdir(TEST_IMAGE_DIR) if f.endswith(('.jpg', '.jpeg', '.png', '.bmp', '.tif'))]
 
 results = []  # Store results (image name and confidence scores)
 
