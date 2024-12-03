@@ -8,7 +8,7 @@ from tensorflow.keras.models import load_model
 MODEL_PATH = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\best_resnet_model-ep4.keras"
 model = load_model(MODEL_PATH)
 
-def object_detection(direction,row,col):
+def object_detection(direction,row,col,model):
 
     grid_coord = f"IMG_{direction}({row}x{col}).png"
     # Class labels (ensure this matches your trained model's classes)
