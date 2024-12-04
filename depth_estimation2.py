@@ -3,6 +3,10 @@ import cv2
 import numpy as np
 import torch
 from typing import List, Dict, Optional
+# Commands to install new new things - 
+# pip3 install torch
+# pip3 install typing
+# If you have cuda torch please use that to get speed.
 
 class GridNavigator:
     def __init__(self, grid_size: int = 3):
@@ -11,7 +15,7 @@ class GridNavigator:
         Args:
             grid_size: Size of the grid (default 3x3)
         """
-        # Set default directories within the class
+        # Set the home dir path and the image dir and depth save dir here too
         self.base_dir = os.path.expanduser("~/Desktop/PythonPrograms/CV_project_code")
         self.image_directory = os.path.join(self.base_dir, "cv_images_png")
         self.depth_save_directory = os.path.join(self.base_dir, "cv_images_depth")
