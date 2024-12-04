@@ -4,6 +4,11 @@ from shared_queue import move_queue, bot_queue, face_queue
 import time
 from collections import deque
 
+from object_detection import object_detection
+from Simulation_Environment import model
+
+from depth_estimation2 import depthEst
+
 # Shared signaling objects
 dfs_ready = threading.Event()
 animation_ready = threading.Event()
@@ -165,7 +170,7 @@ def multiRobotDFS(initial_positions, initial_data):
                     else:
                         # Mark the node as an obstacle
                         new_node.is_obstacle = True
-                        new_node.obstacle_type = object_detection()
+                        new_node.obstacle_type = object_detection(direction,curr_coords[0],curr_coords[1],model)
 
             # Send the movement command to the robot
             if move:
@@ -257,9 +262,21 @@ def depthCalc(depthL, depthF, depthR, step, current_position, face):
         list: Valid directions (['left', 'forward', 'right']).
     """
     x, y = current_position
+
+    # Larger Test Grid
     rows = 10
     cols = 10
     obstacles = [(3, 3), (5, 5), (7, 6)]
+
+    # Smaller Test Grid
+    # rows = 3
+    # cols = 3
+    # obstacles = [(0, 0), (0, 2), (2, 0)]
+
+    ############# Hari's code ##################
+    # valid_movements = depthEst(rows, current_position, face)
+
+    ################# Known Obstacle Code ###############
     valid_movements = []
 
     if face == 'North':
@@ -360,14 +377,14 @@ def calcCoords(curr_coords, direction, face):
     return curr_coords, new_face
 
 
-def object_detection():
-    # Dev's detection network
-
-    # obj = print('object type')
-
-    obj = None
-
-    return obj
+# def object_detection():
+#     # Dev's detection network
+#
+#     # obj = print('object type')
+#
+#     obj = None
+#
+#     return obj
 
 def opposite_direction(direction):
     if direction == 'forward':
