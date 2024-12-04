@@ -115,26 +115,26 @@ class MultiRobotEnvironment:
 # Initialize the environment
 
 # Larger Test Grid
-rows, cols = 10, 10
-obstacles = [(3, 3), (5, 5), (6, 7)]
+# rows, cols = 10, 10
+# obstacles = [(3, 3), (5, 5), (6, 7)]
 
 # Smaller Test Grid
-# rows = 3
-# cols = 3
-# obstacles = [(0, 0), (0, 2), (2, 0)]
+rows = 3
+cols = 3
+obstacles = [(0, 0), (0, 2), (2, 0)]
 
 env = MultiRobotEnvironment(rows, cols, obstacle_coords=obstacles)
 
 # Add robots to the environment
-initial_positions = [(0, 0), (9, 9)]
-initial_directions = ['East', 'West']
-env.add_robot((0, 0), direction='East')
-env.add_robot((9, 9), direction='West')
+# initial_positions = [(0, 0), (9, 9)]
+# initial_directions = ['East', 'West']
+# env.add_robot((0, 0), direction='East')
+# env.add_robot((9, 9), direction='West')
 
 # Smaller Grid
-# initial_positions = [(0, 1), (2, 2)]
-# env.add_robot((0, 1), direction='East')
-# env.add_robot((2, 2), direction='West')
+initial_positions = [(1, 1), (2, 2)]
+env.add_robot((1, 1), direction='North')
+env.add_robot((2, 2), direction='North')
 
 # Set up DFS mapping
 initial_data = [((None, None, None), ['forward', 'right', 'left'])] * len(initial_positions)

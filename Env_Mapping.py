@@ -264,52 +264,52 @@ def depthCalc(depthL, depthF, depthR, step, current_position, face):
     x, y = current_position
 
     # Larger Test Grid
-    rows = 10
-    cols = 10
-    obstacles = [(3, 3), (5, 5), (7, 6)]
+    # rows = 10
+    # cols = 10
+    # obstacles = [(3, 3), (5, 5), (7, 6)]
 
     # Smaller Test Grid
-    # rows = 3
-    # cols = 3
-    # obstacles = [(0, 0), (0, 2), (2, 0)]
+    rows = 3
+    cols = 3
+    obstacles = [(0, 0), (0, 2), (2, 0)]
 
     ############# Hari's code ##################
-    # valid_movements = depthEst(rows, current_position, face)
+    valid_movements = depthEst(rows, current_position, face)
 
     ################# Known Obstacle Code ###############
-    valid_movements = []
-
-    if face == 'North':
-        if y - step >= 0 and (x, y - step) not in obstacles:  # Check forward movement
-            valid_movements.append("forward")
-        if x - step >= 0 and (x - step, y) not in obstacles:  # Check left movement
-            valid_movements.append("left")
-        if x + step < cols and (x + step, y) not in obstacles:  # Check right movement
-            valid_movements.append("right")
-
-    elif face == 'South':
-        if y + step < rows and (x, y + step) not in obstacles:  # Check forward movement
-            valid_movements.append("forward")
-        if x + step < cols and (x + step, y) not in obstacles:  # Check left movement
-            valid_movements.append("left")
-        if x - step >= 0 and (x - step, y) not in obstacles:  # Check right movement
-            valid_movements.append("right")
-
-    elif face == 'East':
-        if x + step < cols and (x + step, y) not in obstacles:  # Check forward movement
-            valid_movements.append("forward")
-        if y - step >= 0 and (x, y - step) not in obstacles:  # Check left movement
-            valid_movements.append("left")
-        if y + step < rows and (x, y + step) not in obstacles:  # Check right movement
-            valid_movements.append("right")
-
-    elif face == 'West':
-        if x - step >= 0 and (x - step, y) not in obstacles:  # Check forward movement
-            valid_movements.append("forward")
-        if y + step < rows and (x, y + step) not in obstacles:  # Check left movement
-            valid_movements.append("left")
-        if y - step >= 0 and (x, y - step) not in obstacles:  # Check right movement
-            valid_movements.append("right")
+    # valid_movements = []
+    #
+    # if face == 'North':
+    #     if y - step >= 0 and (x, y - step) not in obstacles:  # Check forward movement
+    #         valid_movements.append("forward")
+    #     if x - step >= 0 and (x - step, y) not in obstacles:  # Check left movement
+    #         valid_movements.append("left")
+    #     if x + step < cols and (x + step, y) not in obstacles:  # Check right movement
+    #         valid_movements.append("right")
+    #
+    # elif face == 'South':
+    #     if y + step < rows and (x, y + step) not in obstacles:  # Check forward movement
+    #         valid_movements.append("forward")
+    #     if x + step < cols and (x + step, y) not in obstacles:  # Check left movement
+    #         valid_movements.append("left")
+    #     if x - step >= 0 and (x - step, y) not in obstacles:  # Check right movement
+    #         valid_movements.append("right")
+    #
+    # elif face == 'East':
+    #     if x + step < cols and (x + step, y) not in obstacles:  # Check forward movement
+    #         valid_movements.append("forward")
+    #     if y - step >= 0 and (x, y - step) not in obstacles:  # Check left movement
+    #         valid_movements.append("left")
+    #     if y + step < rows and (x, y + step) not in obstacles:  # Check right movement
+    #         valid_movements.append("right")
+    #
+    # elif face == 'West':
+    #     if x - step >= 0 and (x - step, y) not in obstacles:  # Check forward movement
+    #         valid_movements.append("forward")
+    #     if y + step < rows and (x, y + step) not in obstacles:  # Check left movement
+    #         valid_movements.append("left")
+    #     if y - step >= 0 and (x, y - step) not in obstacles:  # Check right movement
+    #         valid_movements.append("right")
 
     print(f"has valid movements {valid_movements}")
 
@@ -376,15 +376,6 @@ def calcCoords(curr_coords, direction, face):
 
     return curr_coords, new_face
 
-
-# def object_detection():
-#     # Dev's detection network
-#
-#     # obj = print('object type')
-#
-#     obj = None
-#
-#     return obj
 
 def opposite_direction(direction):
     if direction == 'forward':
