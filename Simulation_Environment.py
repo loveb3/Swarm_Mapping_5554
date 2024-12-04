@@ -116,6 +116,7 @@ env = MultiRobotEnvironment(rows, cols, obstacle_coords=obstacles)
 
 # Add robots to the environment
 initial_positions = [(0, 0), (9, 9)]
+initial_directions = ['East', 'West']
 env.add_robot((0, 0), direction='East')
 env.add_robot((9, 9), direction='West')
 
@@ -149,7 +150,7 @@ def update(frame):
         move = move_queue.get()
         face = face_queue.get()
         env.move_robot(robot_idx, move, face)
-        print(f'Update says bot {robot_idx} will move {move}')
+        print(f'Update says bot {robot_idx} is at {move}')
 
 
     env.display_environment(ax)
@@ -164,5 +165,10 @@ env.display_environment(ax)
 # Create the animation
 ani = FuncAnimation(fig, update, frames=100, repeat=False, interval=500)
 
+# Wait for DFS completion
+animation_ready.wait()
+ani.event_source.stop()
+
+plt.legend()
 plt.show(block=True)
 plt.close(fig)

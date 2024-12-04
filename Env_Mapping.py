@@ -2,6 +2,7 @@ import numpy as np
 import threading
 from shared_queue import move_queue, bot_queue, face_queue
 import time
+from collections import deque
 
 # Shared signaling objects
 dfs_ready = threading.Event()
@@ -14,7 +15,7 @@ class Node:
         self.image_Front = imageF  # Captured image data to the front
         self.image_Right = imageR  # Captured image data to the right
         self.movements = movements  # Possible movements (e.g., ['forward', 'left'])
-        self.front = 'North'  # initial direction the robot is facing
+        # self.front = 'North'  # initial direction the robot is facing
         self.visited = visited  # Boolean visited flag
         self.parent = None  # Pointer to parent node in the tree
         self.is_obstacle = False  # Flag to mark obstacles
@@ -34,6 +35,17 @@ class Node:
 # static values
 step = 1        # The distance between coordinate points
 
+class Robot:
+    def __init__(self, id, initial_position, initial_direction='North'):
+        self.id = id
+        self.position = initial_position  # Current coordinates
+        self.front = initial_direction  # Current front direction
+        self.frontier = deque()  # Stack for DFS
+        self.backtrack = deque()  # Stack for backtracking
+        self.prev_coords = deque()  # History of visited coordinates
+        self.prev_nodes = deque()  # History of visited nodes
+
+
 
 def multiRobotDFS(initial_positions, initial_data):
     """
@@ -46,23 +58,18 @@ def multiRobotDFS(initial_positions, initial_data):
         Returns:
         - The shared node tree mapping the area.
         """
-    from collections import deque
+
 
     # Initialize the shared node tree and individual robot stacks
     env_tree = {}
-    robot_frontiers = []
-    robot_backtrack = []
-    robot_prev_coords = []
-    robot_prev_nodes = []
 
-    # Create initial nodes for each robot
-    for position, (image, movements) in zip(initial_positions, initial_data):
+    robots = []
+    for bot_id, (position, (image, movements)) in enumerate(zip(initial_positions, initial_data)):
+        robot = Robot(bot_id, position)
         start_node = Node(position, image, movements)
         env_tree[position] = start_node
-        robot_frontiers.append(deque([start_node]))  # Each robot gets its own stack
-        robot_backtrack.append(deque())  # Each robot gets its own backtracking queue
-        robot_prev_coords.append(deque())  # Each robot gets its own previous node queue
-        robot_prev_nodes.append(deque())  # Each robot gets its own previous node queue
+        robot.frontier.append(start_node)
+        robots.append(robot)
 
     def is_valid_step(c_coords, p_coords):
         """Check if the current node is within one movement step of the previous node."""
@@ -71,86 +78,89 @@ def multiRobotDFS(initial_positions, initial_data):
         return abs(x1 - x2) + abs(y1 - y2) <= step  # Manhattan distance should equal step size
 
     # Main exploration loop
-    while any(frontier for frontier in robot_frontiers):  # Continue while any robot has nodes to explore
-        for bot, (frontier, backtrack, prev_coords, prev_nodes) in enumerate(zip(robot_frontiers, robot_backtrack, robot_prev_coords, robot_prev_nodes)):
+    while any(robot.frontier for robot in robots):  # Continue while any robot has nodes to explore
+        for robot in robots:
             # print(f"Bot {bot} has frontier {frontier}")
 
-            if not frontier:  # Skip robots with an empty frontier
+            if not robot.frontier:  # Skip robots with an empty frontier
                 continue
 
 
-            curr_node = frontier.pop()  # Get the current node to explore
+            curr_node = robot.frontier.pop()  # Get the current node to explore
 
             move = None
 
-            # if prev_coords:
-            #     if not is_valid_step(curr_node.coordinates, prev_coords.pop()):
-            #         frontier.append(curr_node)
-            #
-            #         curr_node = prev_nodes.pop()
+
+            bot_queue.put(robot.id)
+            move_queue.put(curr_node.coordinates)
+            face_queue.put(robot.front)
+            # Notify animation and wait for it to complete
+            dfs_ready.clear()
+            animation_ready.set()  # Notify the animation thread
+            dfs_ready.wait()  # Wait for the animation to signal back
+            time.sleep(1)
 
             if curr_node.visited:
                 # Backtracking logic
-                while backtrack:
-                    print(f'{bot} is backtracking at {curr_node.coordinates}\n\n\n\n\n\n\n\n\n')
+                while robot.backtrack:
+                    print(f'{robot.id} is backtracking at {curr_node.coordinates}\n\n\n\n\n\n\n\n\n')
                     move = None
-                    print(f'{bot} frontier is {frontier}')
+                    for node in robot.frontier:
+                        print(f'{robot.id} frontier has {node.coordinates}')
+
 
                     # Check for unvisited neighbors
                     for direction in ['right', 'left', 'forward']:
-                        new_coords, new_front = calcCoords(curr_node.coordinates, direction, curr_node.front)
+                        new_coords, new_front = calcCoords(curr_node.coordinates, direction, robot.front)
                         if new_coords in env_tree:
                             neighbor = env_tree[new_coords]
                             if not neighbor.visited and direction in curr_node.movements:
                                 # Found an unvisited neighbor
-                                frontier.append(neighbor)
+                                robot.frontier.append(neighbor)
                                 move = direction
-                                backtrack.append(opposite_direction(direction))  # Add backtracking path
+                                robot.backtrack.append(opposite_direction(direction))  # Add backtracking path
                                 break
 
-                    # if move:
-                    #     break
-                    # else:
-                    #     # Continue backtracking to parent node
-                    #     move = backtrack.pop()  ###### try moving the break to after this statement (no if else)
-                    move = backtrack.pop()
+                    move = robot.backtrack.pop()
                     break
                 # If the backtrack is empty, robot has finished
-                if not backtrack and not move:
-                    print(f"Robot {bot} has finished its exploration.")
+                if not robot.backtrack and not move:
+                    print(f"Robot {robot.id} has finished its exploration.")
                     continue
             else:
                 # Populate the current node's data
                 curr_coords = curr_node.coordinates
-                imageL, imageF, imageR, possible_movements = populate_node(bot, curr_coords, curr_node.front)
+                imageL, imageF, imageR, possible_movements = populate_node(robot.id, curr_coords, robot.front)
                 curr_node.set(imageL, imageF, imageR, possible_movements, True)
-                print(f"Robot {bot} is at position {curr_coords}.")
-                remove_from_all_frontiers(curr_node, robot_frontiers)
+                print(f"Robot {robot.id} is at position {curr_coords} facing {robot.front}.")
 
                 # Explore possible movements
                 for direction in ['right', 'left', 'forward']:
-                    new_coords, new_front = calcCoords(curr_coords, direction, curr_node.front)
+                    new_coords, new_front = calcCoords(curr_coords, direction, robot.front)
 
-                    print(f"Bot {bot} has possible movements {possible_movements} and direction {direction}")
+                    print(f"Bot {robot.id} has possible movements {possible_movements} and direction {direction}")
 
                     if new_coords in env_tree:
                         new_node = env_tree[new_coords]
+                        new_node.front = new_front
                     elif new_coords not in env_tree:  # Add new node to the tree
                         new_node = Node(new_coords)
                         new_node.front = new_front
                         env_tree[new_coords] = new_node
 
                     if direction in possible_movements:
+                        print(f'{direction} is possible')
+                        print(f"The new coordinates would be {new_coords} facing {new_front}")
                         # Add to frontier if the movement is valid
                         if not new_node.visited:
-                            frontier.append(new_node)
+                            robot.frontier.append(new_node)
                             move = direction
                             front = new_front
 
                             # Add the opposite direction to the backtracking stack
-                            backtrack.append(opposite_direction(direction))
-                            prev_coords.append(new_coords)
-                            prev_nodes.append(curr_node)
+                            robot.backtrack.append(opposite_direction(direction))
+                            robot.prev_coords.append(new_coords)
+                            robot.prev_nodes.append(curr_node)
 
                     else:
                         # Mark the node as an obstacle
@@ -159,19 +169,16 @@ def multiRobotDFS(initial_positions, initial_data):
 
             # Send the movement command to the robot
             if move:
-                print(f"Robot {bot} will make movement {move}.")
-                print(f"and is facing {front}")
-                bot_queue.put(bot)
-                move_queue.put(curr_node.coordinates)
-                face_queue.put(front)
-                # Notify animation and wait for it to complete
-                dfs_ready.clear()
-                animation_ready.set()  # Notify the animation thread
-                dfs_ready.wait()  # Wait for the animation to signal back
-                time.sleep(1)
+                robot.front = front
+                print(f"Robot {robot.id} will make movement {move}.")
+                print(f"and is facing {robot.front}")
+
 
             else:
-                print(f"Robot {bot} has no valid moves left and will wait.")
+                print(f"Robot {robot.id} has no valid moves left and will wait.")
+
+
+            remove_from_all_frontiers(env_tree, robots)
 
     # Notify animation that DFS is complete
     animation_ready.set()
@@ -179,7 +186,7 @@ def multiRobotDFS(initial_positions, initial_data):
     return env_tree
 
 
-def populate_node(robot_id,coordinates, face):
+def populate_node(robot_id, coordinates, face):
     """Simulate receiving data from the robot."""
     print(f"Bot {robot_id}")
     # coordinates = (robot_id, 0)  # get position of the robot
@@ -187,10 +194,23 @@ def populate_node(robot_id,coordinates, face):
     possible_movements = depthCalc(depthL, depthF, depthR, step, coordinates, face)
     return imageL, imageF, imageR, possible_movements
 
-def remove_from_all_frontiers(node, robot_frontiers):
-    for frontier in robot_frontiers:
-        if node in frontier:
-            frontier.remove(node)
+
+def remove_from_all_frontiers(env, robots):
+    """
+    Removes a node from the frontier of all robots.
+
+    Args:
+        robots (list of RobotState): The list of robot states.
+        node_to_remove (Node): The node to be removed from all frontiers.
+    """
+    for coord in env:
+        node = env[coord]
+        if node.visited:
+            for robot in robots:
+                # Remove the node from the robot's frontier if it exists
+                # robot.frontier = [node for node in robot.frontier if node.coords != node_to_remove.coords]
+                if node in robot.frontier:
+                    robot.frontier.remove(node)
 
 
 def captureImage():
@@ -219,25 +239,6 @@ def captureImage():
     return imageL, imageF, imageR, depthL, depthF, depthR
 
 
-# def depthCalc(depthL, depthF, depthR, threshold):
-#     """
-#     Determine valid movement directions based on depth and field bounds.
-#
-#     Parameters:
-#         depthL, depthF, depthR (int): Depth values for directions.
-#         threshold (int): Minimum depth value to consider a path valid.
-#
-#     Returns:
-#         list: Valid directions.
-#     """
-#     valid_movements = []
-#     if depthL > threshold:
-#         valid_movements.append("left")
-#     if depthF > threshold:
-#         valid_movements.append("forward")
-#     if depthR > threshold:
-#         valid_movements.append("right")
-#     return valid_movements
 
 # test code for depthCalc
 def depthCalc(depthL, depthF, depthR, step, current_position, face):
@@ -258,39 +259,39 @@ def depthCalc(depthL, depthF, depthR, step, current_position, face):
     x, y = current_position
     rows = 10
     cols = 10
-    obstacles = [(3, 3), (5, 5), (6, 7)]
+    obstacles = [(3, 3), (5, 5), (7, 6)]
     valid_movements = []
 
     if face == 'North':
-        if y + step < cols and (x, y + step) not in obstacles:  # Check forward movement
+        if y - step >= 0 and (x, y - step) not in obstacles:  # Check forward movement
             valid_movements.append("forward")
-        if x - step >= 0 and (x + step, y) not in obstacles:  # Check left movement
+        if x - step >= 0 and (x - step, y) not in obstacles:  # Check left movement
             valid_movements.append("left")
-        if x + step < rows and (x - step, y) not in obstacles:  # Check right movement
+        if x + step < cols and (x + step, y) not in obstacles:  # Check right movement
             valid_movements.append("right")
 
     elif face == 'South':
-        if y - step >= 0 and (x, y - step) not in obstacles:  # Check forward movement
+        if y + step < rows and (x, y + step) not in obstacles:  # Check forward movement
             valid_movements.append("forward")
-        if x + step < rows and (x - step, y) not in obstacles:  # Check left movement
+        if x + step < cols and (x + step, y) not in obstacles:  # Check left movement
             valid_movements.append("left")
-        if x - step >= 0 and (x + step, y) not in obstacles:  # Check right movement
+        if x - step >= 0 and (x - step, y) not in obstacles:  # Check right movement
             valid_movements.append("right")
 
     elif face == 'East':
-        if x + step < rows and (x - step, y) not in obstacles:  # Check forward movement
+        if x + step < cols and (x + step, y) not in obstacles:  # Check forward movement
             valid_movements.append("forward")
-        if y - step >= 0 and (x, y + step) not in obstacles:  # Check left movement
+        if y - step >= 0 and (x, y - step) not in obstacles:  # Check left movement
             valid_movements.append("left")
-        if y + step < cols and (x, y - step) not in obstacles:  # Check right movement
+        if y + step < rows and (x, y + step) not in obstacles:  # Check right movement
             valid_movements.append("right")
 
     elif face == 'West':
-        if x - step >= 0 and (x + step, y) not in obstacles:  # Check forward movement
+        if x - step >= 0 and (x - step, y) not in obstacles:  # Check forward movement
             valid_movements.append("forward")
-        if y + step < cols and (x, y - step) not in obstacles:  # Check left movement
+        if y + step < rows and (x, y + step) not in obstacles:  # Check left movement
             valid_movements.append("left")
-        if y - step >= 0 and (x, y + step) not in obstacles:  # Check right movement
+        if y - step >= 0 and (x, y - step) not in obstacles:  # Check right movement
             valid_movements.append("right")
 
     print(f"has valid movements {valid_movements}")
@@ -314,11 +315,13 @@ def calcCoords(curr_coords, direction, face):
     x, y = curr_coords
     new_face = face
 
+    print(f'The current pos is {curr_coords} facing {face} and moving {direction}')
+
     if direction == 'forward':
         if face == 'North':
-            return (x, y + step), 'North'
+            return (x, y - step), 'North'
         elif face == 'South':
-            return (x, y - step), 'South'
+            return (x, y + step), 'South'
         elif face == 'East':
             return (x + step, y), 'East'
         elif face == 'West':
@@ -326,9 +329,9 @@ def calcCoords(curr_coords, direction, face):
 
     elif direction == 'backward':
         if face == 'North':
-            return (x, y - step), 'South'
+            return (x, y + step), 'South'
         elif face == 'South':
-            return (x, y + step), 'North'
+            return (x, y - step), 'North'
         elif face == 'East':
             return (x - step, y), 'West'
         elif face == 'West':
