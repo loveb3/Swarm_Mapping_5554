@@ -5,9 +5,15 @@ import time
 from collections import deque
 
 from object_detection import object_detection
-from Simulation_Environment import model
+# from Simulation_Environment import model
 
 from depth_estimation2 import depthEst
+
+from tensorflow.keras.models import load_model
+
+# Change to your model path
+MODEL_PATH = r"C:\Users\bman1\source\repos\ECE5554\Swarm_Mapping_5554\best_resnet_model-ep4.keras"
+model = load_model(MODEL_PATH)
 
 # Shared signaling objects
 dfs_ready = threading.Event()
