@@ -141,53 +141,84 @@ class GridNavigator:
         
         return obstacles
 
-    def get_possible_moves_facing_north(self, row: int, col: int) -> List[str]:
+    def get_possible_moves(self, row: int, col: int, facing: str) -> List[str]:
         """
-        Get possible moves from current position when facing North.
-        Returns a list of possible moves ("Forward", "Left", "Right", "Backward").
+        Get possible moves from current position based on facing direction.
+        Args:
+            row: Current row position
+            col: Current column position
+            facing: Direction currently facing ('N', 'E', 'S', 'W')
+        Returns:
+            List of possible moves ("Forward", "Left", "Right")
         """
         possible_moves = []
-        # This piece of code is to handle the couch error.
-        if row == 2 and col == 2 or row == 1 and col == 2:
-            possible_moves = ["Left"]
         
         # Get walls and obstacles
         walls = self.detect_walls(row, col)
         obstacles = self.detect_obstacles(row, col)
         
-        # When facing North:
-        # - Forward is North
-        # - Left is West
-        # - Right is East
-        # - Backward is South
+        # Define direction mapping based on facing direction
+        direction_mapping = {
+            'N': {'Forward': 'N', 'Left': 'W', 'Right': 'E'},
+            'E': {'Forward': 'E', 'Left': 'N', 'Right': 'S'},
+            'S': {'Forward': 'S', 'Left': 'E', 'Right': 'W'},
+            'W': {'Forward': 'W', 'Left': 'S', 'Right': 'N'}
+        }
         
-        # Check forward movement (North)
-        if not walls['N'] and not obstacles['N']:
+        # Get the relevant direction mapping for current facing direction
+        moves_to_directions = direction_mapping[facing]
+        
+        # Check forward movement
+        forward_direction = moves_to_directions['Forward']
+        if not walls[forward_direction] and not obstacles[forward_direction]:
             possible_moves.append("Forward")
-            
-        # Check left turn (West)
-        if not walls['W'] and not obstacles['W']:
+        
+        # Check left turn
+        left_direction = moves_to_directions['Left']
+        if not walls[left_direction] and not obstacles[left_direction]:
             possible_moves.append("Left")
-            
-        # Check right turn (East)
-        if not walls['E'] and not obstacles['E']:
+        
+        # Check right turn
+        right_direction = moves_to_directions['Right']
+        if not walls[right_direction] and not obstacles[right_direction]:
             possible_moves.append("Right")
-            
-        # Check backward movement (South)
-        if not walls['S'] and not obstacles['S']:
-            possible_moves.append("Backward")
-            
+
+        # Override moves for couch error cases
+        if (row == 2 and col == 2) or (row == 1 and col == 2):
+            if facing == "N":
+                # Only allow Left, Forward, and Right movements
+                possible_moves = [move for move in possible_moves if move in ["Left", "Forward", "Right"]]
+                # Ensure Left is in the moves
+                if "Left" not in possible_moves:
+                    possible_moves.append("Left")
+            elif facing == "S":
+                # Only allow Right movement
+                possible_moves = [move for move in possible_moves if move in ["Left", "Forward", "Right"]]
+                # Ensure Left is in the moves
+                if "Right" not in possible_moves:
+                    possible_moves.append("Right")
+            elif facing == "W":
+                # Only allow Forward movement
+                possible_moves = [move for move in possible_moves if move in ["Left", "Forward", "Right"]]
+                # Ensure Left is in the moves
+                if "Forward" not in possible_moves:
+                    possible_moves.append("Forward")
+        
         return possible_moves
-    
 
 
-# #Exmaple - 
-# navigator = GridNavigator()
-# moves = navigator.get_possible_moves_facing_north(1, 1)
-# print(moves)
+#Exmaple - 
+navigator = GridNavigator()
+# The following function wants 3 parameters, (row, col, direction) 
+# row and col are integers and direction must be a string
+# direction would be - ("N", "E", "W", "S")
+moves = navigator.get_possible_moves(2, 2, "N")
+print(moves)
 
-# # If you need to change directories later
-# navigator.set_directories(
-#     image_dir="/Users/harisumant/Desktop/PythonPrograms/CV_project_code/cv_images_png",
-#     depth_dir="/Users/harisumant/Desktop/PythonPrograms/CV_project_code/cv_images_depth"
-# )
+# If you need to change directories later
+# Accecpts an image directory which has all of the images of the grid squares
+# also must be give a drectory to save the depth images.
+navigator.set_directories(
+    image_dir="/Users/harisumant/Desktop/PythonPrograms/CV_project_code/cv_images_png",
+    depth_dir="/Users/harisumant/Desktop/PythonPrograms/CV_project_code/cv_images_depth"
+)
