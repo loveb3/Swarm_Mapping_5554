@@ -6,7 +6,8 @@ from tensorflow.keras.models import load_model
 
 # Paths
 MODEL_PATH = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\output_model\best_resnet_model.keras"
-TEST_IMAGE_DIR = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\Test_images\cv_images"
+# Change this path for the test images
+TEST_IMAGE_DIR = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\Test_images"
 
 # Load the trained model
 model = load_model(MODEL_PATH)
