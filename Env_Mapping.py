@@ -12,7 +12,7 @@ from depth_estimation2 import depthEst
 from tensorflow.keras.models import load_model
 
 # Change to your model path
-MODEL_PATH = "/Users/harisumant/Desktop/PythonPrograms/CV_project_code/best_resnet_model-ep4_1.keras"
+MODEL_PATH = "/Users/harisumant/Desktop/PythonPrograms/CV_project_code/best_resnet_model-ep4.h5"
 print(os.path.exists(MODEL_PATH))
 model = load_model(MODEL_PATH)
 # navigator = GridNavigator()
@@ -178,7 +178,11 @@ def multiRobotDFS(initial_positions, initial_data):
                     else:
                         # Mark the node as an obstacle
                         new_node.is_obstacle = True
-                        new_node.obstacle_type = object_detection(direction,curr_coords[0],curr_coords[1],model)
+                        new_node.obstacle_type = object_detection(robot.front[0],curr_coords[0],curr_coords[1],model)
+                        for result in new_node.obstacle_type:
+                            print(f"Image: {result['image_name']}")
+                            for cls, conf in result["scores"].items():
+                                print(f"  {cls}: {conf:.2f}")
 
             # Send the movement command to the robot
             if move:

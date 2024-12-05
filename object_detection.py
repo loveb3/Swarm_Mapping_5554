@@ -10,7 +10,7 @@ from tensorflow.keras.models import load_model
 
 def object_detection(direction,row,col, model):
 
-    grid_coord = f"IMG_{direction}({row}x{col}).png"
+    grid_coord = f"/Users/harisumant/Desktop/PythonPrograms/CV_project_code/cv_images_new/IMG_{direction}({row}x{col}).png"
     # Class labels (ensure this matches your trained model's classes)
     CLASS_LABELS = ['aeroplane', 'bicycle', 'bird', 'boat', 'bottle', 'bus', 'car', 
                     'cat', 'chair', 'cow', 'diningtable', 'dog', 'horse', 'motorbike',
@@ -22,7 +22,7 @@ def object_detection(direction,row,col, model):
     target_size=(224, 224)
 
     # Change according to where it is being run, add main Image directory
-    image_path = grid_coord + ".png"
+    image_path = grid_coord #+ ".png"
     # Function to preprocess an image
     image = cv2.imread(image_path)
     if image is None:
