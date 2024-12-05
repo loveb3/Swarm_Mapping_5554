@@ -3,17 +3,19 @@ import threading
 from shared_queue import move_queue, bot_queue, face_queue
 import time
 from collections import deque
-
 from object_detection import object_detection
+import os
 # from Simulation_Environment import model
-
+import tensorflow as tf
 from depth_estimation2 import depthEst
 
 from tensorflow.keras.models import load_model
 
 # Change to your model path
-MODEL_PATH = r"C:\Users\bman1\source\repos\ECE5554\Swarm_Mapping_5554\best_resnet_model-ep4.keras"
+MODEL_PATH = "/Users/harisumant/Desktop/PythonPrograms/CV_project_code/best_resnet_model-ep4_1.keras"
+print(os.path.exists(MODEL_PATH))
 model = load_model(MODEL_PATH)
+# navigator = GridNavigator()
 
 # Shared signaling objects
 dfs_ready = threading.Event()
@@ -277,7 +279,7 @@ def depthCalc(depthL, depthF, depthR, step, current_position, face):
     # Smaller Test Grid
     rows = 3
     cols = 3
-    obstacles = [(0, 0), (0, 2), (2, 0)]
+    obstacles = [(0, 0), (2, 2), (2, 0)]
 
     ############# Hari's code ##################
     valid_movements = depthEst(rows, current_position, face)
