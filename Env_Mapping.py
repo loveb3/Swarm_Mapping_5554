@@ -4,16 +4,16 @@ from shared_queue import move_queue, bot_queue, face_queue
 import time
 from collections import deque
 
-from object_detection import object_detection
+# from object_detection import object_detection
 # from Simulation_Environment import model
 
-from depth_estimation2 import depthEst
+# from depth_estimation2 import depthEst
 
-from tensorflow.keras.models import load_model
+# from tensorflow.keras.models import load_model
 
-# Change to your model path
-MODEL_PATH = r"C:\Users\bman1\source\repos\ECE5554\Swarm_Mapping_5554\best_resnet_model-ep4.keras"
-model = load_model(MODEL_PATH)
+# # Change to your model path
+# MODEL_PATH = r"C:\Users\bman1\source\repos\ECE5554\Swarm_Mapping_5554\best_resnet_model-ep4.keras"
+# model = load_model(MODEL_PATH)
 
 # Shared signaling objects
 dfs_ready = threading.Event()
@@ -88,6 +88,8 @@ def multiRobotDFS(initial_positions, initial_data):
         x2, y2 = p_coords
         return abs(x1 - x2) + abs(y1 - y2) <= step  # Manhattan distance should equal step size
 
+    loops = 0
+
     # Main exploration loop
     while any(robot.frontier for robot in robots):  # Continue while any robot has nodes to explore
         for robot in robots:
@@ -110,6 +112,10 @@ def multiRobotDFS(initial_positions, initial_data):
             animation_ready.set()  # Notify the animation thread
             dfs_ready.wait()  # Wait for the animation to signal back
             time.sleep(1)
+
+            if(robot.id == len(robots)-1):
+                loops+=1
+
 
             if curr_node.visited:
                 # Backtracking logic
@@ -176,7 +182,7 @@ def multiRobotDFS(initial_positions, initial_data):
                     else:
                         # Mark the node as an obstacle
                         new_node.is_obstacle = True
-                        new_node.obstacle_type = object_detection(direction,curr_coords[0],curr_coords[1],model)
+                        # new_node.obstacle_type = object_detection(direction,curr_coords[0],curr_coords[1],model)
 
             # Send the movement command to the robot
             if move:
@@ -194,6 +200,7 @@ def multiRobotDFS(initial_positions, initial_data):
     # Notify animation that DFS is complete
     animation_ready.set()
     print("Exploration complete. All accessible nodes have been visited.")
+    print(f"We took {loops} loops.")
     return env_tree
 
 
@@ -270,52 +277,52 @@ def depthCalc(depthL, depthF, depthR, step, current_position, face):
     x, y = current_position
 
     # Larger Test Grid
-    # rows = 10
-    # cols = 10
-    # obstacles = [(3, 3), (5, 5), (7, 6)]
+    rows = 10
+    cols = 10
+    obstacles = [(3, 3), (5, 5), (7, 6)]
 
-    # Smaller Test Grid
-    rows = 3
-    cols = 3
-    obstacles = [(0, 0), (2, 0), (2, 2)]
+    # # Smaller Test Grid
+    # rows = 3
+    # cols = 3
+    # obstacles = [(0, 0), (2, 0), (2, 2)]
 
     ############# Hari's code ##################
-    valid_movements = depthEst(rows, current_position, face)
+    # valid_movements = depthEst(rows, current_position, face)
 
-    ################# Known Obstacle Code ###############
-    # valid_movements = []
-    #
-    # if face == 'North':
-    #     if y - step >= 0 and (x, y - step) not in obstacles:  # Check forward movement
-    #         valid_movements.append("forward")
-    #     if x - step >= 0 and (x - step, y) not in obstacles:  # Check left movement
-    #         valid_movements.append("left")
-    #     if x + step < cols and (x + step, y) not in obstacles:  # Check right movement
-    #         valid_movements.append("right")
-    #
-    # elif face == 'South':
-    #     if y + step < rows and (x, y + step) not in obstacles:  # Check forward movement
-    #         valid_movements.append("forward")
-    #     if x + step < cols and (x + step, y) not in obstacles:  # Check left movement
-    #         valid_movements.append("left")
-    #     if x - step >= 0 and (x - step, y) not in obstacles:  # Check right movement
-    #         valid_movements.append("right")
-    #
-    # elif face == 'East':
-    #     if x + step < cols and (x + step, y) not in obstacles:  # Check forward movement
-    #         valid_movements.append("forward")
-    #     if y - step >= 0 and (x, y - step) not in obstacles:  # Check left movement
-    #         valid_movements.append("left")
-    #     if y + step < rows and (x, y + step) not in obstacles:  # Check right movement
-    #         valid_movements.append("right")
-    #
-    # elif face == 'West':
-    #     if x - step >= 0 and (x - step, y) not in obstacles:  # Check forward movement
-    #         valid_movements.append("forward")
-    #     if y + step < rows and (x, y + step) not in obstacles:  # Check left movement
-    #         valid_movements.append("left")
-    #     if y - step >= 0 and (x, y - step) not in obstacles:  # Check right movement
-    #         valid_movements.append("right")
+    ################ Known Obstacle Code ###############
+    valid_movements = []
+    
+    if face == 'North':
+        if y - step >= 0 and (x, y - step) not in obstacles:  # Check forward movement
+            valid_movements.append("forward")
+        if x - step >= 0 and (x - step, y) not in obstacles:  # Check left movement
+            valid_movements.append("left")
+        if x + step < cols and (x + step, y) not in obstacles:  # Check right movement
+            valid_movements.append("right")
+    
+    elif face == 'South':
+        if y + step < rows and (x, y + step) not in obstacles:  # Check forward movement
+            valid_movements.append("forward")
+        if x + step < cols and (x + step, y) not in obstacles:  # Check left movement
+            valid_movements.append("left")
+        if x - step >= 0 and (x - step, y) not in obstacles:  # Check right movement
+            valid_movements.append("right")
+    
+    elif face == 'East':
+        if x + step < cols and (x + step, y) not in obstacles:  # Check forward movement
+            valid_movements.append("forward")
+        if y - step >= 0 and (x, y - step) not in obstacles:  # Check left movement
+            valid_movements.append("left")
+        if y + step < rows and (x, y + step) not in obstacles:  # Check right movement
+            valid_movements.append("right")
+    
+    elif face == 'West':
+        if x - step >= 0 and (x - step, y) not in obstacles:  # Check forward movement
+            valid_movements.append("forward")
+        if y + step < rows and (x, y + step) not in obstacles:  # Check left movement
+            valid_movements.append("left")
+        if y - step >= 0 and (x, y - step) not in obstacles:  # Check right movement
+            valid_movements.append("right")
 
     print(f"has valid movements {valid_movements}")
 

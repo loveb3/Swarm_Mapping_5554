@@ -111,6 +111,15 @@
             <li>The team wanted to implement and improve the world of SWARM robotics using computer vision methodologies to detect obstacles and overcome them. Search and rescue missions for the thousands people who are stuck in various dangerous situations can be considered the ultimate application, since the robots would map the various and identify the obstacles. The results showed that the integration Computer vision and SWARM robotics can be used for identification challenges in various terrains, and the robots were able to move past and map the whole area they were placed in. This is an evolving method of solving the problem of environmental mapping problems such as Search and Rescue operations, as it decreases the direct involvement of human lives, guiding disabled peoples through rooms, and more.</li>
         </ul>
     </div>
+    <div class="box">
+        <h2>Teaser Figure</Figure></h2>
+        <ul>
+        <div class="image-container">
+            <li>The figure below displays the code traversing a 3X3 grid.</li>
+            <img src="robot_animation.gif" alt="SWARM Robotics Image" width="300" height="400">
+        </div>
+        </ul>
+    </div>
 
     <div class="box">
         <h2>Problem Statement</h2>
@@ -127,37 +136,82 @@
             <li>Multiple simple robots will be simulated in a testing arena with walls and obstacles to impede the path to the end. A master unit will be used to plan the paths for each robot to take, communicating simple directions, such as turns, to each of the robots to guide them through the field. The master unit will be fitted with a camera to make use of computer vision techniques to detect obstacles and positions of the robots in the field.</li>
             <li>The whole code can be split into 3 main sections:
                 <ul>
-                    <li>Object Detection - This is the main Computer Vision aspect of the project, where a trained model is used to identify the obstacle that would be in front of the robot. To achieve good and consistent results, ResNet50 was used to get a base model that works well. Then model was then trained using Pascal VOC 2012, with all 20 of the classes included in the model. It was trained for 50 epochs, with the best resulting Model having an accuracy of ~91%. The model is then loaded into the main environment mapping program. The model is used when any of the robots encounter an obstacle, where the model will give confience scores for the objects detected in the image. The detecting program is restricted to 3 classes for testing purposes. This is due to the testing images being from a real-world grid environment, since that would give a more realistic indoor environment to the actual eventual application. The output that is fed into the environmental mapping is a results tuple, that contains the Label/Objects detected with the confidence scores for the 3 restricted classes for the set test case, being "Chair", "DiningTable" and "Sofa".</li>
-                    <li>Depth Estimation - </li>
-                    <li>Search Algorithm - The search algorithm is the backbone of the robotic exploration. The algorithm the team chose to use was a Depth First Search algorithm, to ensure that each node was visited in a manner that would make sense in a physical situation. When a robot reachs a node, it will use the aforementioned depth estimation code to determine if movement is possible to the front, left, or right or the current position. In this simulated environment, the bounds of the arena are known and directly passed in to the detection code to help determine the valid movements. The movements are then used to search for the next nodes in the grid to explore. As long as these nodes are not visited, the robot will attach the node to its frontier. If the node is obstructed, meaning that the direction is not a valid movement, it will attempt to identify the object in the way. This is accomplished using the aforementioned object detection code. The results of the object detection will be appended to the obstacle node. This set of commands repeats for each robot in the swarm for each loop. The loop will repeat for as long as any robot has nodes in its frontier. Once a robot has an empty frontier, it will remain dormant. The code ends once each robot has finished exploration.</li>
+                    <p><b>Object Detection </b>- This is the main Computer Vision aspect of the project, where a trained model is used to identify the obstacle that would be in front of the robot. To achieve good and consistent results, ResNet50 was used to get a base model that works well. Then model was then trained using Pascal VOC 2012, with all 20 of the classes included in the model. It was trained for 50 epochs, with the best resulting Model having an accuracy of ~91%. The model is then loaded into the main environment mapping program. The model is used when any of the robots encounter an obstacle, where the model will give confience scores for the objects detected in the image. The detecting program is restricted to 3 classes for testing purposes. This is due to the testing images being from a real-world grid environment, since that would give a more realistic indoor environment to the actual eventual application. The images are normalised to a 224x224 size for ease of ingestion.The output that is fed into the environmental mapping is a results tuple, that contains the Label/Objects detected with the confidence scores for the 3 restricted classes for the set test case, being "Chair", "DiningTable" and "Sofa".</p>
+                    <p><b>Depth Estimation </b>- This component of the project makes use of  the MiDaS depth estimation model to identify obstacles and map potential movement paths for the robot. We implemented the MiDaS small model variant, striking a balance between computational efficiency and performance, to generate accurate depth maps of the environment. Captured images are preprocessed through a pipeline that includes normalization to a 0-255 range and conversion to floating-point format (0-1), optimizing them for depth analysis. The depth maps are analyzed by focusing on the central region, defined as the middle third of both the height and width dimensions, which is critical for navigation decisions. A binary thresholding method is then applied with a depth threshold of 0.7, isolating areas of significant variation indicative of obstacles. Contours are detected on the thresholded regions, and those exceeding 100 pixels are classified as substantial obstacles. This process ensures accurate detection while filtering out noise. The system outputs a dictionary of potential movement options—“Forward,” “Left,” and “Right.” These decisions are derived by integrating the depth-based obstacle analysis with predefined wall constraints for each grid position. This combined approach enables the robot to navigate safely and efficiently, avoiding obstacles and adhering to environmental boundaries while optimizing its trajectory.</p>
+                    <p><b>Search Algorithm </b>- The search algorithm is the backbone of the robotic exploration. The algorithm the team chose to use was a Depth First Search algorithm, to ensure that each node was visited in a manner that would make sense in a physical situation. When a robot reachs a node, it will use the aforementioned depth estimation code to determine if movement is possible to the front, left, or right or the current position. In this simulated environment, the bounds of the arena are known and directly passed in to the detection code to help determine the valid movements. The movements are then used to search for the next nodes in the grid to explore. As long as these nodes are not visited, the robot will attach the node to its frontier. If the node is obstructed, meaning that the direction is not a valid movement, it will attempt to identify the object in the way. This is accomplished using the aforementioned object detection code. The results of the object detection will be appended to the obstacle node. This set of commands repeats for each robot in the swarm for each loop. The loop will repeat for as long as any robot has nodes in its frontier. Once a robot has an empty frontier, it will remain dormant. The code ends once each robot has finished exploration. The algorithm has the starting of a backtracing protocol for a physical robot that would need to reverse through the taken path, however, this is not fully implemented. Below, you can see the DFS in the process of searching a 10x10 grid.</p>
+                    <div class="image-container">
+                        <img src="10x10inProgress.png" alt="SWARM Robotics Image" width="300" height="300">
+                    </div>
                 </ul>
 
             </li>
         </ul>
     </div>
 
+    <div class="image-container">
+        <img src="resnet50.webp" alt="SWARM Robotics Image">
+    </div>
     <div class="box">
         <h2>Experimentation and Results</h2>
         <h3>Object Detection Testing</h3>
         <ul>
-            <li>Testing and training the model was a straight forward process. The Pascal VOC 2012 dataset was split into the Training Dataset and the Validation dataset. </li>
+            <p>Testing and training the model was a straight forward process. The Pascal VOC 2012 dataset was split into the Training Dataset and the Validation dataset. Then once the code was trained, the validatation set was used for initial testing of all the classes present in Pascal VOC 2012 dataset. This where the ~91% accuracy value comes from. After this, the model was then taken and tested using actual images that were aquired from a real life grid space, to test how the model is at giving out confidence scores for the 3 main classes for this use case: Chairs, Dining Tables and Sofas. The model was very accurate, and was able to accurately detect the chairs, and tables and tables present on the grid.</p>
         </ul>
         <h3>Depth Estimation Testing</h3>
         <ul>
-            
+            <p>The testing strategy for the depth estimation system combines unit and integration testing to ensure reliability and accuracy. Unit tests validate core components such as image loading, depth map generation with MiDaS, obstacle detection, and movement validation across grid positions. Key cases assess image processing, normalization, thresholding, and movement constraints. Integration tests evaluate the entire navigation pipeline, focusing on seamless interaction between depth estimation and movement determination. </p>
         </ul>
         <h3>Depth First Search Algorithm Testing</h3>
         <ul>
-            <li></li>
+            <p>To ensure the robots would visit each unoccupied node, the depth first search algorithm needed to be verified. The verification was to watch as the robot tracked through the simulation environment and ensure each node was hit. From the images seen below, the algorithms were able to reach each node for both an 10x10 grid and a 3x3 grid. To change the positions or number of obstacles, one must edit the simulation environment code to define the new coordinates. Just beneath that, one can change the number of robots and starting positions. As a note, the obstacles are in y, x coordinates, as compared to x, y coordinates for the robots.</p>
+            <div class="image-container">
+                <img src="10x10explored.png" alt="SWARM Robotics Image" width="300" height="300">
+            </div>
+            <div class="image-container">
+                <img src="3x3explored.png" alt="SWARM Robotics Image" width="300" height="300">
+            </div>
         </ul>
         <h3>SWARM Sizing Impact on Exploration Time</h3>
         <ul>
-            <li></li>
+            <p>The benefit of swarm robotics is the ability to effiniently work on a task. For environmental mapping, this would mean that the environment is fully mapped in less time as we increase the number of robots. To test this, we output the number of loops after all of the robots have completed one node visit. The 3x3 grid was used to test this. If there were two robots, the simulation went through 3 loops. If there was only one robot, the simulation went through 6 loops. Of course, the usefulness of multiple robots is dependent on the configuration of your robots, but this proves that in some situations, multiple robots can increase efficiency. As discussed above, the number and starting position of robots can be changed in the simulation environment using x, y coordinates.</p>
         </ul>
 
     </div>
 
     <div class="box">
+        <h2>Qualitative Results</h2>
+        <li>Below is an image of simulated 2 dimensional Grid environment along with the 2 robots and obstacles:</li>
+        <div class="image-container">
+            <img src="robot_animation.gif" alt="SWARM Robotics Image" width="300" height="400">
+        </div>
+        <div class="image-container">
+            <img src="grid2.png" alt="SWARM Robotics Image" width="300" height="400">
+        </div>
+        <li><i>Note: The actual program does not include the bounding boxes due to their inconsistency, used here to display the confidence for the chair that was detected</i></li>
+        <div class="image-container">
+            <img src="IMG_E(2x2).png" alt="Object Detection Image"  width="300" height="400">
+        </div>
+        <li>Below is an image of the depth estimation that the program generates:</li>
+        <div class="image-container">
+            <img src="IMG_N(2x1)_depth.png" alt="Depth Estimation Image" width="300" height="400">
+        </div>
+        <li>Below is an image of the program generating the possible move sets for a single robot during testing after hitting an obstacle:</li>
+        <div class="image-container">
+            <img src="Possible_movements.png" alt="Depth Estimation Image" width="300" height="400">
+        </div>
+        <div class="image-container">
+            <img src="Possible_movements2.png" alt="Depth Estimation Image" width="300" height="400">
+        </div>
+    </div>
+
+    <div class="box">
+        <h2>Conclusion</h2>
+            <p>This report has described our team effort for environmental mapping using multiple robots. The method to achieve is a combination of depth-first-search algorithm, transformation method for depth estimation and a convolutional neural-network for object recognition to help map our simulated environment. In this report we detail testing methods for each of these described pieces of the project where we prove that out approach is a reasonable method to move throughout the env and collect the data on any obstacles within the env. These techniques can be expanded upon to be used in our motivation of guiding disabled people through unfamiliar rooms or search and rescue operations in dangerous environment. We can improve our approach by moving this system to the real world and expand upon the dataset to include various possible scenarios.</p>
+
+    </div>
+
+    <div class="box">
+        <h2>Proposal Artifacts</h2>
         <h2>Intended Testing and Experimentation</h2>
         <h3>These were the initial intended experiments, but as the project progressed, the team deviated and made major modifications to the overall architecture. These are left here are artifacts of proposal, these can be used for future developments and proper reporting of the project.</h3>
         <h3>Object Detection Testing</h3>
@@ -238,15 +292,15 @@
                 </ul>
             </li>
         </ul>
-    </div>
+    
 
-    <div class="box">
+    
         <h2>Experiment Setup</h2>
         <p>The experiment involves an environment designed with walls, obstacles, and mobile robots. These robots will navigate the environment and interact with obstacles. The obstacles will include various objects such as wall sections, cones, solid blocks, and other relevant structures provided by the software to simulate real-world scenarios.</p>
         <p>To aid in navigation, a master camera will be positioned at the midpoint of the arena. This camera will capture the positions of both the robots and the obstacles and transmit this data to the robots, facilitating communication and coordination among them.</p>
-    </div>
+    
 
-    <div class="box">
+    
         <h2>Dataset</h2>
         <p>The dataset will be generated in a simulation environment and will consist of feature embeddings for both objects and robots. These feature embeddings will be used for:</p>
         <ul>
@@ -260,9 +314,9 @@
             <li>CNN for Feature Detection: The CNN will be applied to both robots and obstacles.</li>
             <li>Hybrid Approach: The CNN will focus on identifying the robots, while edge detection will be used for identifying obstacles. A more effective approach will be implemented.</li>
         </ul>
-    </div>
+    
 
-    <div class="box">
+    
         <h2>Expected Results</h2>
         <p>The goal of the experiment is to implement feature extraction and recognition for swarm robots, enabling them to map and navigate unknown environments. This method has potential applications in industrial automation, where robots can autonomously map areas and create optimized paths for future operations.</p>
         <p>By the end of the experiment, the robots should be capable of:</p>
@@ -271,9 +325,9 @@
             <li>Locating themselves within the environment.</li>
             <li>Mapping the area for future navigation.</li>
         </ul>    
-    </div>
+    
 
-    <div class="box">
+    
         <h2>Uncertainties and Constraints</h2>
         <p>There are a few uncertain outcomes and constraints:</p>
         <ul>
@@ -292,6 +346,9 @@
             <li><a href="https://arxiv.org/pdf/1608.03610">Robotics Communication Research</a></li>
             <li><a href="https://caslab.ece.vt.edu/research">Swarm Research</a></li>
             <li><a href="https://docs.opencv.org/4.x/">OpenCV Research</a></li>
+            <li><a href="https://pytorch.org/hub/intelisl_midas_v2/">Depth Estimation Model</a></li>
+            <li><a href="http://host.robots.ox.ac.uk/pascal/VOC/voc2012/">Pascal VOC 2012</a></li>
+            <li><a href="https://github.com/isl-org/MiDaS">Pascal VOC 2012</a></li>
         </ul>
     </div>
 
