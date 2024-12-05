@@ -1,15 +1,15 @@
 import os
 import tensorflow as tf
-import pandas as pd  # Ensure pandas is imported
+import pandas as pd
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Dense, Flatten, GlobalAveragePooling2D
+from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, Callback
 import matplotlib.pyplot as plt
+from IPython.display import clear_output
 import xml.etree.ElementTree as ET
-from collections import Counter
 
 # Paths to Pascal VOC 2012 dataset
 BASE_DIR = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\VOCdevkit\VOC2012"
@@ -18,57 +18,20 @@ ANNOTATIONS_DIR = os.path.join(BASE_DIR, "Annotations")
 TRAIN_TXT = os.path.join(BASE_DIR, "ImageSets", "Main", "train.txt")
 VAL_TXT = os.path.join(BASE_DIR, "ImageSets", "Main", "val.txt")
 
-# Check dataset structure
-if not os.path.exists(IMAGE_DIR):
-    raise FileNotFoundError(f"JPEGImages directory not found: {IMAGE_DIR}")
-if not os.path.exists(ANNOTATIONS_DIR):
-    raise FileNotFoundError(f"Annotations directory not found: {ANNOTATIONS_DIR}")
-if not os.path.exists(TRAIN_TXT):
-    raise FileNotFoundError(f"train.txt not found: {TRAIN_TXT}")
-if not os.path.exists(VAL_TXT):
-    raise FileNotFoundError(f"val.txt not found: {VAL_TXT}")
-
 # Parameters
 BATCH_SIZE = 16
 EPOCHS = 20
 IMG_SIZE = (224, 224)
 LEARNING_RATE = 1e-4
-OUTPUT_DIR = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\output_model"
+OUTPUT_DIR = r"C:\Users\devoj\OneDrive\Documents\Dev's Documents\Virginia Tech Classes\Fall 2024\ECE 5554 Computer Vision\ECE 5554 CV Project Group 10\obstacle_detection\output_model\vis"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Debugging Function: Count classes in annotations
-def count_classes(txt_file, annotations_dir):
-    class_counts = Counter()
-    with open(txt_file, "r") as f:
-        for line in f:
-            image_id = line.strip()
-            annotation_file = os.path.join(annotations_dir, f"{image_id}.xml")
-            if os.path.exists(annotation_file):
-                tree = ET.parse(annotation_file)
-                root = tree.getroot()
-                for obj in root.findall("object"):
-                    class_name = obj.find("name").text
-                    class_counts[class_name] += 1
-            else:
-                print(f"Missing annotation file: {annotation_file}")
-    return class_counts
-
-# Display class distribution
-print("Class distribution in training set:")
-print(count_classes(TRAIN_TXT, ANNOTATIONS_DIR))
-print("\nClass distribution in validation set:")
-print(count_classes(VAL_TXT, ANNOTATIONS_DIR))
-
-# Create data generator from Pascal VOC train/val text files
+# Function to load Pascal VOC data
 def load_pascal_voc_data(txt_file, image_dir, annotations_dir, target_size, batch_size):
-    """
-    Load Pascal VOC data and create a Keras-compatible data generator.
-    """
     image_paths = []
     labels = []
     class_set = set()
 
-    # Read the Pascal VOC txt file and gather image paths and labels
     with open(txt_file, "r") as f:
         for line in f:
             image_id = line.strip()
@@ -82,7 +45,6 @@ def load_pascal_voc_data(txt_file, image_dir, annotations_dir, target_size, batc
                 print(f"Warning: Missing annotation {annotation_file}")
                 continue
             
-            # Parse the XML annotation file
             tree = ET.parse(annotation_file)
             root = tree.getroot()
             object_classes = []
@@ -95,24 +57,13 @@ def load_pascal_voc_data(txt_file, image_dir, annotations_dir, target_size, batc
                 print(f"Warning: No objects found in {annotation_file}")
                 continue
 
-            # Store the image path and corresponding class (pick the first object for simplicity)
             image_paths.append(image_path)
             labels.append(object_classes[0])  # Use single-label classification
 
-    # Map classes to indices
     class_indices = {class_name: idx for idx, class_name in enumerate(sorted(class_set))}
-    print(f"Detected classes: {class_indices}")
-
-    # Convert string labels to class indices
     label_indices = [class_indices[label] for label in labels]
 
-    # Create a DataFrame
-    data = pd.DataFrame({
-        "filename": image_paths,
-        "class": labels
-    })
-
-    # Create ImageDataGenerator and flow from the DataFrame
+    data = pd.DataFrame({"filename": image_paths, "class": labels})
     datagen = ImageDataGenerator(rescale=1.0 / 255.0)
     dataset = datagen.flow_from_dataframe(
         dataframe=data,
@@ -125,9 +76,7 @@ def load_pascal_voc_data(txt_file, image_dir, annotations_dir, target_size, batc
 
     return dataset, class_indices
 
-
-
-# Load training and validation datasets
+# Load datasets
 train_generator, train_class_indices = load_pascal_voc_data(TRAIN_TXT, IMAGE_DIR, ANNOTATIONS_DIR, IMG_SIZE, BATCH_SIZE)
 valid_generator, val_class_indices = load_pascal_voc_data(VAL_TXT, IMAGE_DIR, ANNOTATIONS_DIR, IMG_SIZE, BATCH_SIZE)
 
@@ -135,18 +84,50 @@ valid_generator, val_class_indices = load_pascal_voc_data(VAL_TXT, IMAGE_DIR, AN
 base_model = ResNet50(weights="imagenet", include_top=False, input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3))
 x = GlobalAveragePooling2D()(base_model.output)
 x = Dense(1024, activation="relu")(x)
-
 x = Dense(len(train_class_indices), activation="softmax")(x)  # Multi-class classification
-loss_function = "categorical_crossentropy"
 
 model = Model(inputs=base_model.input, outputs=x)
+model.compile(optimizer=Adam(learning_rate=LEARNING_RATE), loss="categorical_crossentropy", metrics=["accuracy"])
 
-# Compile the model
-model.compile(
-    optimizer=Adam(learning_rate=LEARNING_RATE),
-    loss=loss_function,
-    metrics=["accuracy"],
-)
+# Callback for batch-wise graph
+class BatchAccuracyPlot(Callback):
+    def __init__(self):
+        super().__init__()
+        self.batch_losses = []
+        self.batch_accuracies = []
+
+    def on_train_batch_end(self, batch, logs=None):
+        logs = logs or {}
+        self.batch_losses.append(logs.get("loss"))
+        self.batch_accuracies.append(logs.get("accuracy"))
+
+    def on_epoch_end(self, epoch, logs=None):
+        # Plot batch-wise loss and accuracy
+        clear_output(wait=True)
+        plt.figure(figsize=(10, 5))
+
+        # Plot batch-wise loss
+        plt.subplot(1, 2, 1)
+        plt.plot(self.batch_losses, label="Batch Loss")
+        plt.title(f"Loss During Epoch {epoch + 1}")
+        plt.xlabel("Batch")
+        plt.ylabel("Loss")
+        plt.legend()
+
+        # Plot batch-wise accuracy
+        plt.subplot(1, 2, 2)
+        plt.plot(self.batch_accuracies, label="Batch Accuracy")
+        plt.title(f"Accuracy During Epoch {epoch + 1}")
+        plt.xlabel("Batch")
+        plt.ylabel("Accuracy")
+        plt.legend()
+
+        plt.tight_layout()
+        plt.show()
+
+        # Reset batch metrics for the next epoch
+        self.batch_losses = []
+        self.batch_accuracies = []
 
 # Callbacks
 checkpoint = ModelCheckpoint(
@@ -162,6 +143,7 @@ early_stopping = EarlyStopping(
     verbose=1,
     restore_best_weights=True,
 )
+batch_plot = BatchAccuracyPlot()
 
 # Train the model
 history = model.fit(
@@ -170,17 +152,9 @@ history = model.fit(
     validation_data=valid_generator,
     validation_steps=len(valid_generator),
     epochs=EPOCHS,
-    callbacks=[checkpoint, early_stopping],
+    callbacks=[checkpoint, early_stopping, batch_plot],
     verbose=1,
 )
 
 # Save the final model
 model.save(os.path.join(OUTPUT_DIR, "final_resnet_model.keras"))
-
-# Plot training history
-plt.figure(figsize=(10, 5))
-plt.plot(history.history["loss"], label="Training Loss")
-plt.plot(history.history["val_loss"], label="Validation Loss")
-plt.legend()
-plt.title("Training and Validation Loss")
-plt.show()
