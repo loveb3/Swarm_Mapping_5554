@@ -101,20 +101,20 @@
     <div class="box">
         <h2>Abstract</h2>
         <ul>
-            <li>We wanted to implement and improve the world of SWARM robotics using computer vision methodologies to detect obstacles and overcome them. We used a mixture of CNN algorithms and tranformers to achieve this. The results showed us that the implementation of Computer vision in the world of SWARM robotics is the future for identify various terrains, and used for operations such as Search and Rescue.</li>
+            <li>Humans interact with the space around them by using their senses to guide themselves. But what if there were an environment that one needed to navigate, but it was too dangerous or the person was compromised in some way? To implement the environmental mapping a convolutional neural network was used to identify objects, transformation techniques were used to identify how far an object was from the robot agent, and a depth first search algorithm was used to visit each position in a simulated arena. The implementation discussed was able to visit each node in a simulated environment, detect possible obstructions, and store the identified objects with reasonably accuracy.</li>
         </ul>
     </div>
 
     <div class="box">
         <h2>Introduction</h2>
         <ul>
-            <li>The dream for our project and the dream for SWARM robotics correlates to the California Forest fires. Search and rescue missions for the thousands people who are stuck in various dangerous environmental situation is the goal for this project. </li>
+            <li>The team wanted to implement and improve the world of SWARM robotics using computer vision methodologies to detect obstacles and overcome them. Search and rescue missions for the thousands people who are stuck in various dangerous situations can be considered the ultimate application, since the robots would map the various and identify the obstacles. The results showed that the integration Computer vision and SWARM robotics can be used for identification challenges in various terrains, and the robots were able to move past and map the whole area they were placed in. This is an evolving method of solving the problem of environmental mapping problems such as Search and Rescue operations, as it decreases the direct involvement of human lives, guiding disabled peoples through rooms, and more.</li>
         </ul>
     </div>
 
     <div class="box">
         <h2>Problem Statement</h2>
-        <p>We would like to use a swarm community of robots connected to a master control unit to navigate and map a course of obstacles through object detections protocol and predicting collisions of the swarm to complete the course. The swarm will use mounted cameras to map the layout of the test course while the master properly navigates each of the agents. This project can be extended to situations to map rooms for people needing assistance, search and rescue operations, and schedule movements for a community of robots.</p>
+        <p>The team would like to use a swarm community of robots connected to a master control unit to navigate and map a course of obstacles through object detections protocol and predicting collisions of the swarm to complete the course. The swarm will use mounted cameras to map the layout of the test course while the master properly navigates each of the agents. This project can be extended to situations to map rooms for people needing assistance, search and rescue operations, and schedule movements for a community of robots.</p>
         <div class="image-container">
             <img src="swarm_robotics.webp" alt="SWARM Robotics Image">
             
@@ -125,14 +125,41 @@
         <h2>Approach</h2>
         <ul>
             <li>Multiple simple robots will be simulated in a testing arena with walls and obstacles to impede the path to the end. A master unit will be used to plan the paths for each robot to take, communicating simple directions, such as turns, to each of the robots to guide them through the field. The master unit will be fitted with a camera to make use of computer vision techniques to detect obstacles and positions of the robots in the field.</li>
-            <li>The robotic side of the system will be achieved via simulation to limit complications regarding budget and physical system design. This way, the team can primarily focus on concepts related to the computer vision task. Each of the robots will be fitted with a camera to allow for image-based mapping of the simulated course. The simulation will be performed in MuJoCo to demonstrate the application of the swarm.</li>
-            <li>For the vision application, we will make use of object detection protocol and depth estimation to fully map the course. The swarm agents will send images to the master unit for vision operations to limit the need for processing power on each agent. For object detection, we will try to make use of the You Only Look Once (YOLO) protocol and test the capability of the YOLO models vs the Single Shot Detector model to test limits of the efficiency of the system. For depth estimation, we will test stereovision algorithms vs image sequence depth estimation. To achieve the stereovision, we would include two cameras on each of the swarm agents. To achieve the image sequence depth estimation, we would compare current images to a preceding time-stamped image to estimate the depth of objects in the environment.</li>
+            <li>The whole code can be split into 3 main sections:
+                <ul>
+                    <li>Object Detection - This is the main Computer Vision aspect of the project, where a trained model is used to identify the obstacle that would be in front of the robot. To achieve good and consistent results, ResNet50 was used to get a base model that works well. Then model was then trained using Pascal VOC 2012, with all 20 of the classes included in the model. It was trained for 50 epochs, with the best resulting Model having an accuracy of ~91%. The model is then loaded into the main environment mapping program. The model is used when any of the robots encounter an obstacle, where the model will give confience scores for the objects detected in the image. The detecting program is restricted to 3 classes for testing purposes. This is due to the testing images being from a real-world grid environment, since that would give a more realistic indoor environment to the actual eventual application. The output that is fed into the environmental mapping is a results tuple, that contains the Label/Objects detected with the confidence scores for the 3 restricted classes for the set test case, being "Chair", "DiningTable" and "Sofa".</li>
+                    <li>Depth Estimation - </li>
+                    <li>Search Algorithm - The search algorithm is the backbone of the robotic exploration. The algorithm the team chose to use was a Depth First Search algorithm, to ensure that each node was visited in a manner that would make sense in a physical situation. When a robot reachs a node, it will use the aforementioned depth estimation code to determine if movement is possible to the front, left, or right or the current position. In this simulated environment, the bounds of the arena are known and directly passed in to the detection code to help determine the valid movements. The movements are then used to search for the next nodes in the grid to explore. As long as these nodes are not visited, the robot will attach the node to its frontier. If the node is obstructed, meaning that the direction is not a valid movement, it will attempt to identify the object in the way. This is accomplished using the aforementioned object detection code. The results of the object detection will be appended to the obstacle node. This set of commands repeats for each robot in the swarm for each loop. The loop will repeat for as long as any robot has nodes in its frontier. Once a robot has an empty frontier, it will remain dormant. The code ends once each robot has finished exploration.</li>
+                </ul>
+
+            </li>
         </ul>
     </div>
 
     <div class="box">
-        <h2>Testing and Experimentation</h2>
+        <h2>Experimentation and Results</h2>
+        <h3>Object Detection Testing</h3>
+        <ul>
+            <li>Testing and training the model was a straight forward process. The Pascal VOC 2012 dataset was split into the Training Dataset and the Validation dataset. </li>
+        </ul>
+        <h3>Depth Estimation Testing</h3>
+        <ul>
+            
+        </ul>
+        <h3>Depth First Search Algorithm Testing</h3>
+        <ul>
+            <li></li>
+        </ul>
+        <h3>SWARM Sizing Impact on Exploration Time</h3>
+        <ul>
+            <li></li>
+        </ul>
 
+    </div>
+
+    <div class="box">
+        <h2>Intended Testing and Experimentation</h2>
+        <h3>These were the initial intended experiments, but as the project progressed, the team deviated and made major modifications to the overall architecture. These are left here are artifacts of proposal, these can be used for future developments and proper reporting of the project.</h3>
         <h3>Object Detection Testing</h3>
         <ul>
             <li>Testing how well the robot can detect objects

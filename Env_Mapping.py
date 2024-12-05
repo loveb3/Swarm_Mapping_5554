@@ -277,7 +277,7 @@ def depthCalc(depthL, depthF, depthR, step, current_position, face):
     # Smaller Test Grid
     rows = 3
     cols = 3
-    obstacles = [(0, 0), (0, 2), (2, 0)]
+    obstacles = [(0, 0), (2, 0), (2, 2)]
 
     ############# Hari's code ##################
     valid_movements = depthEst(rows, current_position, face)
